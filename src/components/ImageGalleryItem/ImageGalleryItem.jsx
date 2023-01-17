@@ -1,12 +1,12 @@
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-
 import { GalleryItem, Img } from './ImageGalleryItem.styled';
 import { AddModal } from 'components/Modal/Modal';
-
 import fetchAPI from 'services/fetch-api';
 
 export class ImageGalleryItem extends Component {
+  pageNorm;
+
   state = {
     responseData: [],
     error: null,
@@ -14,8 +14,17 @@ export class ImageGalleryItem extends Component {
     idImg: null,
   };
 
+  static propTypes = {
+    textForm: PropTypes.string.isRequired,
+    onFetchTotal: PropTypes.func.isRequired,
+    page: PropTypes.number.isRequired,
+    statusFunc: PropTypes.func.isRequired,
+    status: PropTypes.string.isRequired,
+  };
+
   closeModal = evt => {
-    if (evt.target.tagName === 'IMG') {
+    const { tagName } = evt.target;
+    if (tagName === 'IMG') {
       return;
     }
     this.setState({ isModalOpen: false });
@@ -28,11 +37,14 @@ export class ImageGalleryItem extends Component {
   };
 
   openModal = evt => {
-    if (evt.target.tagName !== 'IMG') {
+    const { tagName } = evt.target;
+    const evtTarget = Number(evt.target.getAttribute('id'));
+
+    if (tagName !== 'IMG') {
       return;
     }
     this.setState({ isModalOpen: true });
-    this.setState({ idImg: Number(evt.target.getAttribute('id')) });
+    this.setState({ idImg: evtTarget });
   };
 
   componentDidMount() {
@@ -45,32 +57,19 @@ export class ImageGalleryItem extends Component {
     document.removeEventListener('click', this.handleClickImg);
   }
 
-  async componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState) {
     const prevText = prevProps.textForm;
     const nextText = this.props.textForm;
     const total = this.props.onFetchTotal;
     const prevPage = prevProps.page;
     const nextPage = this.props.page;
 
-    // const onPrevStateChangeLetter = prevProps.onStateChangeLetter;
-    // const onNextStateChangeLetter = this.props.onStateChangeLetter;
-
-    // if (onPrevStateChangeLetter !== onNextStateChangeLetter) {
-    //   this.props.pageChange();
-    // }
-    // if (prevText !== nextText) {
-    //   this.props.pageChange();
-    //   this.setState({ responseData: [] });
-    // }
-
     if (prevText !== nextText) {
+      this.pageNorm = 1;
       this.props.statusFunc('pending');
-      const changePage1 = this.props.onChangeStatePage;
-      await changePage1();
       this.setState({ responseData: [] });
-
-      await fetchAPI
-        .fetchApi(nextText, this.props.page)
+      fetchAPI
+        .fetchApi(nextText, this.pageNorm)
         .then(responseDataFetch => {
           const { responseData } = this.state;
           this.setState({
@@ -88,10 +87,13 @@ export class ImageGalleryItem extends Component {
     }
 
     if (prevPage !== nextPage) {
+      if (this.pageNorm === 1) {
+        this.pageNorm = 2;
+      }
       this.props.statusFunc('pending');
 
       fetchAPI
-        .fetchApi(nextText, this.props.page)
+        .fetchApi(nextText, this.pageNorm)
         .then(responseDataFetch => {
           const { responseData } = this.state;
           this.setState({
@@ -101,6 +103,7 @@ export class ImageGalleryItem extends Component {
           total(responseDataFetch.total);
           // let response = [...responseData, ...responseDataFetch.hits];
           // localStorage.setItem('data', JSON.stringify(response));
+          this.pageNorm += 1;
         })
         .catch(error => {
           this.setState({ error });
@@ -112,27 +115,15 @@ export class ImageGalleryItem extends Component {
   render() {
     const { responseData, error } = this.state;
     const { status } = this.props;
+    const { isModalOpen } = this.state;
     // const data = localStorage.getItem('data');
     // const parsedData = JSON.parse(data);
-    const { isModalOpen } = this.state;
 
     // if (status === 'idle')
 
     // if (status === 'pending') {
     //   return <Loader />;
     // }
-
-    //=================================================
-
-    // if (parsedData) {
-    //   return parsedData.map(({ id, webformatURL, tags }) => (
-    //     <GalleryItem key={id}>
-    //       <Img src={webformatURL} alt={tags} />
-    //     </GalleryItem>
-    //   ));
-    // }
-
-    //====================================================
 
     if (status === 'rejected') {
       return <h1>{error.message}</h1>;
@@ -169,7 +160,28 @@ export class ImageGalleryItem extends Component {
   }
 }
 
-// Filter.propTypes = {
-//   value: PropTypes.string.isRequired,
-//   onFilterHandler: PropTypes.func.isRequired,
-// };
+// const prevPage = prevProps.page;
+// const nextPage = this.props.page;
+
+// const onPrevStateChangeLetter = prevProps.onStateChangeLetter;
+// const onNextStateChangeLetter = this.props.onStateChangeLetter;
+
+// if (onPrevStateChangeLetter !== onNextStateChangeLetter) {
+//   this.props.pageChange();
+// }
+// if (prevText !== nextText) {
+//   this.props.pageChange();
+//   this.setState({ responseData: [] });
+// }
+
+//=================================================
+
+// if (parsedData) {
+//   return parsedData.map(({ id, webformatURL, tags }) => (
+//     <GalleryItem key={id}>
+//       <Img src={webformatURL} alt={tags} />
+//     </GalleryItem>
+//   ));
+// }
+
+//====================================================

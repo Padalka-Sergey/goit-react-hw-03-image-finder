@@ -1,4 +1,4 @@
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { ImageList } from './ImageGallery.styled';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
@@ -13,16 +13,16 @@ export class ImageGallery extends Component {
     page: 1,
   };
 
+  static propTypes = {
+    textForm: PropTypes.string.isRequired,
+  };
+
   onFetchTotal = data => {
     this.setState({ dataQty: data });
   };
 
   onState = data => {
     this.setState({ status: data });
-  };
-
-  onChangeStatePage = () => {
-    this.setState({ page: 1 });
   };
 
   onClickBtn = () => {
@@ -33,17 +33,14 @@ export class ImageGallery extends Component {
 
   render() {
     const { textForm } = this.props;
-    const { status, page, dataQty } = this.state;
-    // console.log(this.state.page);
+    const { status, dataQty, page } = this.state;
     return (
       <>
         <ImageList>
           <ImageGalleryItem
-            // onStateChangeLetter={this.props.onStateChangeLetter}
             onFetchTotal={this.onFetchTotal}
             textForm={textForm}
             statusFunc={this.onState}
-            onChangeStatePage={this.onChangeStatePage}
             status={status}
             page={page}
           />
@@ -59,8 +56,3 @@ export class ImageGallery extends Component {
     );
   }
 }
-
-// Filter.propTypes = {
-//   value: PropTypes.string.isRequired,
-//   onFilterHandler: PropTypes.func.isRequired,
-// };

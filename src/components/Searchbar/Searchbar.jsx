@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import { Form, Btn, Input, Searhbar, BtnSpan } from './Searchbar.styled';
 
 export class SearchbarForm extends Component {
@@ -7,29 +7,27 @@ export class SearchbarForm extends Component {
     textFormLetter: '',
   };
 
-  // static propTypes = {
-  //   onSubmitProps: PropTypes.func.isRequired,
-  // };
+  static propTypes = {
+    onSubmitProps: PropTypes.func.isRequired,
+  };
 
   handleTextFormChange = event => {
-    this.setState({ textFormLetter: event.currentTarget.value.toLowerCase() });
-    // localStorage.removeItem('data');
-    // setTimeout(() => {
-    //   this.props.onStateFormLetter(this.state.textFormLetter);
-    // }, 10);
+    const evtValue = event.currentTarget.value.toLowerCase();
+    this.setState({ textFormLetter: evtValue });
   };
 
   handleSubmit = event => {
     const { textFormLetter } = this.state;
+    const { onSubmitProps } = this.props;
+
     event.preventDefault();
-    // this.props.onResetPage (1);
 
     if (textFormLetter.trim() === '') {
       alert('Введите текст');
       return;
     }
 
-    this.props.onSubmitProps(textFormLetter);
+    onSubmitProps(textFormLetter);
   };
 
   render() {
