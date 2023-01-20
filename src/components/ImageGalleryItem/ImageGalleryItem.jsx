@@ -1,11 +1,12 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { PureComponent } from 'react';
 import { GalleryItem, Img } from './ImageGalleryItem.styled';
 import { AddModal } from 'components/Modal/Modal';
 import fetchAPI from 'services/fetch-api';
 
-export class ImageGalleryItem extends Component {
+export class ImageGalleryItem extends PureComponent {
   pageNorm;
+  response;
 
   state = {
     responseData: [],
@@ -47,12 +48,41 @@ export class ImageGalleryItem extends Component {
     this.setState({ idImg: evtTarget });
   };
 
-  componentDidMount() {
+  async componentDidMount() {
+    // console.log('Smontirovalsya');
     document.addEventListener('keydown', this.handleKeyDown);
     document.addEventListener('click', this.handleClickImg);
+
+    const total = this.props.onFetchTotal;
+    const nextText = this.props.textForm;
+    this.pageNorm = 1;
+    this.props.statusFunc('pending');
+    // this.setState({ responseData: [] });
+
+    await fetchAPI
+      .fetchApi(nextText, this.pageNorm)
+      .then(responseDataFetch => {
+        this.setState({
+          // responseData: [...responseDataFetch.hits],
+          responseData: responseDataFetch.hits,
+        });
+        this.props.statusFunc('resolved');
+        total(responseDataFetch.total);
+      })
+      .catch(error => {
+        this.setState({ error });
+        this.props.statusFunc('rejected');
+      });
+
+    const { responseData } = this.state;
+    console.log(responseData);
+    localStorage.setItem('data', JSON.stringify(responseData));
+    // let response = [...responseData, ...responseDataFetch.hits];
+    // localStorage.setItem('data', JSON.stringify(response));
   }
 
   componentWillUnmount() {
+    // console.log('razmontirovalsya');
     document.removeEventListener('keydown', this.handleKeyDown);
     document.removeEventListener('click', this.handleClickImg);
   }
@@ -63,6 +93,9 @@ export class ImageGalleryItem extends Component {
     const total = this.props.onFetchTotal;
     const prevPage = prevProps.page;
     const nextPage = this.props.page;
+    // console.log('Обновился');
+    // console.log(prevText);
+    // console.log(nextText);
 
     if (prevText !== nextText) {
       this.pageNorm = 1;
@@ -71,9 +104,10 @@ export class ImageGalleryItem extends Component {
       fetchAPI
         .fetchApi(nextText, this.pageNorm)
         .then(responseDataFetch => {
-          const { responseData } = this.state;
+          // const { responseData } = this.state;
           this.setState({
-            responseData: [...responseData, ...responseDataFetch.hits],
+            // responseData: [...responseData, ...responseDataFetch.hits],
+            responseData: responseDataFetch.hits,
           });
           this.props.statusFunc('resolved');
           total(responseDataFetch.total);
@@ -95,14 +129,19 @@ export class ImageGalleryItem extends Component {
       fetchAPI
         .fetchApi(nextText, this.pageNorm)
         .then(responseDataFetch => {
-          const { responseData } = this.state;
+          // const { responseData } = this.state;
           this.setState({
-            responseData: [...responseData, ...responseDataFetch.hits],
+            // responseData: [...responseData, ...responseDataFetch.hits],
+            responseData: responseDataFetch.hits,
           });
           this.props.statusFunc('resolved');
           total(responseDataFetch.total);
-          // let response = [...responseData, ...responseDataFetch.hits];
-          // localStorage.setItem('data', JSON.stringify(response));
+
+          const data = localStorage.getItem('data');
+          const parsedData = JSON.parse(data);
+          this.response = [...parsedData, ...responseDataFetch.hits];
+          localStorage.setItem('data', JSON.stringify(this.response));
+
           this.pageNorm += 1;
         })
         .catch(error => {
@@ -116,17 +155,22 @@ export class ImageGalleryItem extends Component {
     const { responseData, error } = this.state;
     const { status } = this.props;
     const { isModalOpen } = this.state;
-    // const data = localStorage.getItem('data');
-    // const parsedData = JSON.parse(data);
+
+    const data = localStorage.getItem('data');
+    const parsedData = JSON.parse(data);
 
     // if (status === 'idle')
 
-    // if (status === 'pending') {
-    //   return <Loader />;
-    // }
-
     if (status === 'rejected') {
       return <h1>{error.message}</h1>;
+    }
+
+    if (parsedData) {
+      return parsedData.map(({ id, webformatURL, tags }) => (
+        <GalleryItem key={id}>
+          <Img src={webformatURL} alt={tags} />
+        </GalleryItem>
+      ));
     }
 
     if (status === 'resolved') {

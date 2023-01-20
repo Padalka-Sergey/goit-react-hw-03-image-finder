@@ -21,7 +21,7 @@ export class ImageGallery extends Component {
     this.setState({ dataQty: data });
   };
 
-  onState = data => {
+  onStatusFunc = data => {
     this.setState({ status: data });
   };
 
@@ -33,18 +33,21 @@ export class ImageGallery extends Component {
 
   render() {
     const { textForm } = this.props;
-    const { status, dataQty, page } = this.state;
+    const { page, status, dataQty } = this.state;
+
     return (
       <>
-        <ImageList>
-          <ImageGalleryItem
-            onFetchTotal={this.onFetchTotal}
-            textForm={textForm}
-            statusFunc={this.onState}
-            status={status}
-            page={page}
-          />
-        </ImageList>
+        {textForm && (
+          <ImageList>
+            <ImageGalleryItem
+              onFetchTotal={this.onFetchTotal}
+              textForm={textForm}
+              statusFunc={this.onStatusFunc}
+              status={status}
+              page={page}
+            />
+          </ImageList>
+        )}
         {status === 'pending' && <Loader />}
         {dataQty === 0 && (
           <TitleVisoutImg>Картинки с именем {textForm} нет :(</TitleVisoutImg>

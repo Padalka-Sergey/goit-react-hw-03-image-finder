@@ -17,7 +17,7 @@ export class App extends Component {
     return (
       <AppContainer>
         <SearchbarForm onSubmitProps={this.handleFormSubmit} />
-        <ImageGallery textForm={textForm}></ImageGallery>
+        <ImageGallery textForm={textForm} />
       </AppContainer>
     );
   }
