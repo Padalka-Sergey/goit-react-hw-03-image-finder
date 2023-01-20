@@ -66,20 +66,15 @@ export class ImageGalleryItem extends PureComponent {
           // responseData: [...responseDataFetch.hits],
           responseData: responseDataFetch.hits,
         });
-        this.props.statusFunc('resolved');
         total(responseDataFetch.total);
       })
       .catch(error => {
         this.setState({ error });
         this.props.statusFunc('rejected');
       });
-
+    this.props.statusFunc('resolved');
     const { responseData } = this.state;
-    console.log(responseData);
-    console.log(responseData);
     localStorage.setItem('data', JSON.stringify(responseData));
-    // let response = [...responseData, ...responseDataFetch.hits];
-    // localStorage.setItem('data', JSON.stringify(response));
   }
 
   componentWillUnmount() {
