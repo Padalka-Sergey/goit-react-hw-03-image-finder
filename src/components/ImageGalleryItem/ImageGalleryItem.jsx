@@ -76,6 +76,7 @@ export class ImageGalleryItem extends PureComponent {
 
     const { responseData } = this.state;
     console.log(responseData);
+    console.log(responseData);
     localStorage.setItem('data', JSON.stringify(responseData));
     // let response = [...responseData, ...responseDataFetch.hits];
     // localStorage.setItem('data', JSON.stringify(response));
