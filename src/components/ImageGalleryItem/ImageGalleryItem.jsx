@@ -31,12 +31,6 @@ export class ImageGalleryItem extends PureComponent {
     this.setState({ isModalOpen: false });
   };
 
-  handleKeyDown = evt => {
-    if (evt.code === 'Escape') {
-      this.setState({ isModalOpen: false });
-    }
-  };
-
   openModal = evt => {
     const { tagName } = evt.target;
     const evtTarget = Number(evt.target.getAttribute('id'));
@@ -48,39 +42,50 @@ export class ImageGalleryItem extends PureComponent {
     this.setState({ idImg: evtTarget });
   };
 
-  async componentDidMount() {
-    // console.log('Smontirovalsya');
-    document.addEventListener('keydown', this.handleKeyDown);
-    document.addEventListener('click', this.handleClickImg);
+  handleKeyDown = evt => {
+    if (evt.code === 'Escape') {
+      this.setState({ isModalOpen: false });
+    }
+  };
 
-    const total = this.props.onFetchTotal;
-    const nextText = this.props.textForm;
-    this.pageNorm = 1;
-    this.props.statusFunc('pending');
-    // this.setState({ responseData: [] });
+  onResponseDataFetch = responseDataFetch => {
+    return responseDataFetch.hits.map(
+      ({ id, webformatURL, tags, largeImageURL }) => {
+        return { id, webformatURL, tags, largeImageURL };
+      }
+    );
+  };
 
-    await fetchAPI
+  onFetchAPI = (total, nextText) => {
+    fetchAPI
       .fetchApi(nextText, this.pageNorm)
       .then(responseDataFetch => {
+        localStorage.setItem(
+          'data',
+          JSON.stringify(this.onResponseDataFetch(responseDataFetch))
+        );
         this.setState({
-          // responseData: [...responseDataFetch.hits],
-          responseData: responseDataFetch.hits,
+          responseData: this.onResponseDataFetch(responseDataFetch),
         });
         total(responseDataFetch.total);
+        this.props.statusFunc('resolved');
       })
       .catch(error => {
         this.setState({ error });
         this.props.statusFunc('rejected');
       });
-    this.props.statusFunc('resolved');
-    const { responseData } = this.state;
-    localStorage.setItem('data', JSON.stringify(responseData));
-  }
+  };
 
-  componentWillUnmount() {
-    // console.log('razmontirovalsya');
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.removeEventListener('click', this.handleClickImg);
+  componentDidMount() {
+    console.log('dfbdsfnbsdhfbdsnb');
+
+    const total = this.props.onFetchTotal;
+    const nextText = this.props.textForm;
+    localStorage.clear();
+    this.pageNorm = 1;
+    this.props.statusFunc('pending');
+
+    this.onFetchAPI(total, nextText);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -89,31 +94,14 @@ export class ImageGalleryItem extends PureComponent {
     const total = this.props.onFetchTotal;
     const prevPage = prevProps.page;
     const nextPage = this.props.page;
-    // console.log('Обновился');
-    // console.log(prevText);
-    // console.log(nextText);
 
     if (prevText !== nextText) {
-      this.pageNorm = 1;
-      this.props.statusFunc('pending');
+      localStorage.removeItem('data');
       this.setState({ responseData: [] });
-      fetchAPI
-        .fetchApi(nextText, this.pageNorm)
-        .then(responseDataFetch => {
-          // const { responseData } = this.state;
-          this.setState({
-            // responseData: [...responseData, ...responseDataFetch.hits],
-            responseData: responseDataFetch.hits,
-          });
-          this.props.statusFunc('resolved');
-          total(responseDataFetch.total);
-          // let response = [...responseData, ...responseDataFetch.hits];
-          // localStorage.setItem('data', JSON.stringify(response));
-        })
-        .catch(error => {
-          this.setState({ error });
-          this.props.statusFunc('rejected');
-        });
+      this.props.statusFunc('pending');
+      this.pageNorm = 1;
+
+      this.onFetchAPI(total, nextText);
     }
 
     if (prevPage !== nextPage) {
@@ -125,17 +113,18 @@ export class ImageGalleryItem extends PureComponent {
       fetchAPI
         .fetchApi(nextText, this.pageNorm)
         .then(responseDataFetch => {
-          // const { responseData } = this.state;
           this.setState({
-            // responseData: [...responseData, ...responseDataFetch.hits],
-            responseData: responseDataFetch.hits,
+            responseData: this.onResponseDataFetch(responseDataFetch),
           });
-          this.props.statusFunc('resolved');
           total(responseDataFetch.total);
+          this.props.statusFunc('resolved');
 
           const data = localStorage.getItem('data');
           const parsedData = JSON.parse(data);
-          this.response = [...parsedData, ...responseDataFetch.hits];
+          this.response = [
+            ...parsedData,
+            ...this.onResponseDataFetch(responseDataFetch),
+          ];
           localStorage.setItem('data', JSON.stringify(this.response));
 
           this.pageNorm += 1;
@@ -162,9 +151,18 @@ export class ImageGalleryItem extends PureComponent {
     }
 
     if (parsedData) {
-      return parsedData.map(({ id, webformatURL, tags }) => (
+      return parsedData.map(({ id, webformatURL, tags, largeImageURL }) => (
         <GalleryItem key={id}>
-          <Img src={webformatURL} alt={tags} />
+          <Img id={id} alt={tags} src={webformatURL} onClick={this.openModal} />
+          {isModalOpen && id === this.state.idImg && (
+            <AddModal
+              id={id}
+              tags={tags}
+              largeImageURL={largeImageURL}
+              onClose={this.closeModal}
+              onKeyDown={this.handleKeyDown}
+            />
+          )}
         </GalleryItem>
       ));
     }
@@ -177,8 +175,8 @@ export class ImageGalleryItem extends PureComponent {
               <GalleryItem key={id}>
                 <Img
                   id={id}
-                  src={webformatURL}
                   alt={tags}
+                  src={webformatURL}
                   onClick={this.openModal}
                 />
 
@@ -199,29 +197,3 @@ export class ImageGalleryItem extends PureComponent {
     }
   }
 }
-
-// const prevPage = prevProps.page;
-// const nextPage = this.props.page;
-
-// const onPrevStateChangeLetter = prevProps.onStateChangeLetter;
-// const onNextStateChangeLetter = this.props.onStateChangeLetter;
-
-// if (onPrevStateChangeLetter !== onNextStateChangeLetter) {
-//   this.props.pageChange();
-// }
-// if (prevText !== nextText) {
-//   this.props.pageChange();
-//   this.setState({ responseData: [] });
-// }
-
-//=================================================
-
-// if (parsedData) {
-//   return parsedData.map(({ id, webformatURL, tags }) => (
-//     <GalleryItem key={id}>
-//       <Img src={webformatURL} alt={tags} />
-//     </GalleryItem>
-//   ));
-// }
-
-//====================================================
